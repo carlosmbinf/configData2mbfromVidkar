@@ -21,7 +21,7 @@ server.on('connected', async () => {
         let result = ""
         let usuariosVPN = await server.call('getusers', { "vpn2mb": true, "vpn": true });
 
-        await usuariosVPN.forEach(async (user) => {
+        await usuariosVPN.map(async (user) => {
 
             let disponible = false
             try {
@@ -29,9 +29,11 @@ server.on('connected', async () => {
                     err && console.error(err)
                     disponible = available;
                     server.call('setOnlineVPN', user._id, { "vpn2mbConnected": disponible })
+		console.log(`192.168.18.${user.vpnip} ${user.username} conected: ${disponible}`)
                     // server.call.(user._id, {
                     //   $set: { vpnConnected: disponible }
                     // })
+
                 })
             } catch (error) {
                 console.error(error)
