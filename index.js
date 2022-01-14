@@ -2,7 +2,7 @@ const simpleDDP = require("simpleddp"); // nodejs
 const ws = require("isomorphic-ws");
 var cron = require("node-cron");
 
-var fs = require( "fs");
+var fs = require("fs");
 var tcpp = require('tcp-ping');
 let opts = {
     endpoint: "ws://vidkar.sytes.net:6000/websocket",
@@ -18,44 +18,44 @@ server.on('connected', async () => {
 
         // let userSub = server.subscribe("user");
         // await userSub.ready();
-        let result=""
-       let usuariosVPN = await server.call('getusers',{ "vpn2mb": true, "vpn" : true });
+        let result = ""
+        let usuariosVPN = await server.call('getusers', { "vpn2mb": true, "vpn": true });
 
-       usuariosVPN.forEach(async (user) => {
+        await usuariosVPN.forEach(async (user) => {
 
-        let disponible = false
-        try {
-          await tcpp.probe(`192.168.18.${user.vpnip}`, 135, async function (err, available) {
-            err && console.error(err)
-            disponible = available;
-            server.call('setOnlineVPN',user._id,{ "vpn2mbConnected": disponible })
-            // server.call.(user._id, {
-            //   $set: { vpnConnected: disponible }
-            // })
-          })
-        } catch (error) {
-          console.error(error)
-        }
-      })
-
-
+            let disponible = false
+            try {
+                await tcpp.probe(`192.168.18.${user.vpnip}`, 135, async function (err, available) {
+                    err && console.error(err)
+                    disponible = available;
+                    server.call('setOnlineVPN', user._id, { "vpn2mbConnected": disponible })
+                    // server.call.(user._id, {
+                    //   $set: { vpnConnected: disponible }
+                    // })
+                })
+            } catch (error) {
+                console.error(error)
+            }
+        })
 
 
-    //    await server.collection('users').filter(user => user.vpn == true).fetch()
 
-        usuariosVPN && usuariosVPN.forEach((element,index) => {
+
+        //    await server.collection('users').filter(user => user.vpn == true).fetch()
+
+        await usuariosVPN.forEach((element, index) => {
             result = element.username ? `${result}${element.username} l2tpd ${element.passvpn ? element.passvpn : "123"} ${element.vpnip ? '192.168.18.' + element.vpnip : "*"}\n` : result
-       });
-        console.log(result);
+        });
+        await console.log(result);
         // server.disconnect()
 
-            await fs.writeFile("/etc/ppp/chap-secrets", result, (err) => {
-                if (err) console.error("Error: " + err);
-                console.info("Datos Guardados Correctamente!!!")
-            });
-        
-            
-        server.disconnect()
+        await fs.writeFile("/etc/ppp/chap-secrets", result, (err) => {
+            if (err) console.error("Error: " + err);
+            console.info("Datos Guardados Correctamente!!!")
+        });
+
+
+        await server.disconnect()
     } catch (error) {
         console.error(error);
     }
@@ -76,7 +76,7 @@ server.on('error', (e) => {
 
 cron
     .schedule(
-        "0-59 0-23 1-31 1-12 *",
+        "*/20 0-59 0-23 1-31 1-12 *",
         async () => {
             server.connect()
         },
