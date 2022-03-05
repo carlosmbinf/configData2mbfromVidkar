@@ -128,6 +128,9 @@ ejecutar = async () => {
                         ///////SUMANDOLE EL CONSUMO AL USUARIO
                         let ip = cliente.split(".")[3]
                         let user = (await server.call('getusers', { vpnip: Number(ip) }))[0]
+                        console.log('IP: ' + ip);
+                        
+                        console.log('User: ' + JSON.stringify(user));
                         user && await server.call('setOnlineVPN', user._id, {
                             vpnMbGastados: user.vpnMbGastados ?
                                 (consumos[cliente]
