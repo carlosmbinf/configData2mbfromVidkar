@@ -124,18 +124,16 @@ ejecutar = async () => {
                         /////LISTA LOS CONECTADOS PARA COMPARARLOS CON EL REGISTRO DE MEGAS PARA SABER CUAL SE DESCONECTO
                         listadeclientesconectados.push(cliente)
 
-                        console.log(cliente)
                         ///////SUMANDOLE EL CONSUMO AL USUARIO
                         let ip = cliente.split(".")[3]
                         let user = (await server.call('getusers', { vpnip: Number(ip) }))[0]
-                        console.log('IP: ' + ip);
-                        
+
                         let VPNmegasGastados = user.vpnMbGastados
                             ? (consumos[cliente]
                                 ? (user.vpnMbGastados + (megasGastados - consumos[cliente]))
                                 : user.vpnMbGastados + megasGastados)
-                            : (consumos[cliente] ?consumos[cliente]:0)
-                            console.log('Megas Gastados ' + VPNmegasGastados);
+                            : (consumos[cliente] ? consumos[cliente] : 0)
+
                         user && await server.call('setOnlineVPN', user._id, {
                             vpnMbGastados: VPNmegasGastados
                         })
@@ -161,7 +159,7 @@ ejecutar = async () => {
 
                 console.log(consumos);
 
-                console.log("DESCONECTADOS: " + array1);
+                console.log("DESCONECTADOS: \n" + array1);
                 ////// QUITA LOS USUARIOS DESCONECTADOS Y ACTUALIZA LOS MEGAS EN VIDKAR
                 array1.length > 0 && (
                     array1.map(async (a) => {
