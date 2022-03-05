@@ -136,6 +136,8 @@ ejecutar = async () => {
                                 ? (user.vpnMbGastados + (megasGastados - consumos[cliente]))
                                 : user.vpnMbGastados + megasGastados)
                             : consumos[cliente]
+                            console.log('megasGastados: ' + megasGastados);
+                            console.log('consumos[cliente]: ' + consumos[cliente]);
                             console.log('VPNmegasGastados: ' + VPNmegasGastados);
                         user && await server.call('setOnlineVPN', user._id, {
                             vpnMbGastados: VPNmegasGastados
