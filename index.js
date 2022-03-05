@@ -46,10 +46,14 @@ cron
     .schedule(
         "*/2 0-59 0-23 1-31 1-12 *",
         async () => {
-            server.connected ? 
-               ejecutar()
-            
-            : server.connect()
+            try {
+                server.connected
+                    ? ejecutar()
+                    : server.connect()
+            } catch (error) {
+                console.log(error);
+            }
+
         },
         {
             scheduled: true,
@@ -169,7 +173,7 @@ ejecutar = async () => {
             // server.call('setOnlineVPN', user._id, { "vpn2mbConnected": disponible })
     
         } catch (error) {
-            console.error(error);
+            console.log(error);
         }
     }
 
