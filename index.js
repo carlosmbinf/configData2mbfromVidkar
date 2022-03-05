@@ -22,13 +22,18 @@ var listadeclientesconectados = []
 
 server.on('connected', async () => {
     // do something
+   
     console.log("Conectado");
     
-
-    //////poniendo a todos en ofline para poner solo los conectados en online
-    let user = (await server.call('getusers', { vpn: true }))
-    await user.map(elemento => server.call('setOnlineVPN', elemento._id, { "vpn2mbConnected": false }))
-    
+try {
+     //////poniendo a todos en ofline para poner solo los conectados en online
+     let user = (await server.call('getusers', { vpn: true }))
+     await user.map(elemento => server.call('setOnlineVPN', elemento._id, { "vpn2mbConnected": false }))
+     
+} catch (error) {
+    console.log(error);
+}
+   
 });
 
 server.on('disconnected', () => {
@@ -45,7 +50,7 @@ server.on('error', (e) => {
 cron
     .schedule(
         "*/2 0-59 0-23 1-31 1-12 *",
-        async () => {
+        () => {
             try {
                 server.connected
                     ? ejecutar()
