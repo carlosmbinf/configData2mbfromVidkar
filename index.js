@@ -130,13 +130,15 @@ ejecutar = async () => {
                         let user = (await server.call('getusers', { vpnip: Number(ip) }))[0]
                         console.log('IP: ' + ip);
                         
-                        console.log('User: ' + JSON.stringify(user));
+                        console.log('UserId: ' + user._id);
+                        let VPNmegasGastados = user.vpnMbGastados
+                            ? (consumos[cliente]
+                                ? (user.vpnMbGastados + (megasGastados - consumos[cliente]))
+                                : user.vpnMbGastados + megasGastados)
+                            : consumos[cliente]
+                            console.log('VPNmegasGastados: ' + VPNmegasGastados);
                         user && await server.call('setOnlineVPN', user._id, {
-                            vpnMbGastados: user.vpnMbGastados ?
-                                (consumos[cliente]
-                                    ? (user.vpnMbGastados + (megasGastados - consumos[cliente]))
-                                    : user.vpnMbGastados + megasGastados)
-                                : consumos[cliente]
+                            vpnMbGastados: VPNmegasGastados
                         })
 
                         ////// CONECTANDO EL USUARIO EN VIDKAR
