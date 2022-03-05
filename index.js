@@ -138,7 +138,7 @@ ejecutar = async () => {
                             : consumos[cliente]
                             console.log('megasGastados: ' + megasGastados);
                             console.log('cliente: ' + cliente);
-                            console.log('consumos: ' + consumos);
+                            console.log('consumos: ' + JSON.stringify(consumos));
                             console.log('consumos[cliente]: ' + consumos[cliente]);
                             console.log('VPNmegasGastados: ' + VPNmegasGastados);
                         user && await server.call('setOnlineVPN', user._id, {
