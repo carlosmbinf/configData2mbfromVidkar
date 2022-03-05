@@ -81,98 +81,113 @@ ejecutar = async () => {
     
         /////DEVOLVER RESULTADO DE IFCONFIG
         require('ifconfig-linux')().then(async (element) => {
-    
-            ///////creando variables para listar los usuarios que tienen VPN2MB
-            let result = ""
-            let usuariosVPN = await server.call('getusers', { "vpn2mb": true, "vpn": true });
+    try {
+         ///////creando variables para listar los usuarios que tienen VPN2MB
+         let result = ""
+         let usuariosVPN = await server.call('getusers', { "vpn2mb": true, "vpn": true });
+         
+         await usuariosVPN.forEach((usuarioVPN, index) => {
+             result = usuarioVPN.username ? `${result}${usuarioVPN.username} l2tpd ${usuarioVPN.passvpn ? usuarioVPN.passvpn : "123"} ${usuarioVPN.vpnip ? '192.168.18.' + usuarioVPN.vpnip : "*"}\n` : result
+         });
+         await console.log(result);
+
+         ////////GUARDANDO PARA EL ARCHIVO OPTIONS LOS USUARIOS CON EL SERVICIO
+         await fs.writeFile("/etc/ppp/chap-secrets", result, (err) => {
+             if (err) console.error("Error: " + err);
+             console.info("Datos Guardados Correctamente!!!")
+         });
+
+
+
+
+
+         /////LISTA LAS INTERFACES
+         let listInterfaces = Object.keys(element)
+ 
+         /////SELECCIONA LAS INTERFACES CON PPP
+         let ppp = listInterfaces.filter(interface => interface.includes("ppp"))
+         //////RECORRE TODAS LAS INTERFACES
+
+
+         
+           
+             
+         ppp.map(async (elementppp) => {
+
+             try {
+                  ///////SELECCIONA LA IP DEL CLIENTE
+             let cliente =  element[elementppp].inet.destination
+ 
+             //////MEGAS GASTADOS
+             let megasGastados =  element[elementppp].tx.bytes 
+ 
+             /////LISTA LOS CONECTADOS PARA COMPARARLOS CON EL REGISTRO DE MEGAS PARA SABER CUAL SE DESCONECTO
+             listadeclientesconectados.push(cliente)
+
+             console.log( cliente)
+             ///////SUMANDOLE EL CONSUMO AL USUARIO
+             let ip = cliente.split(".")[3]
+             let user = (await server.call('getusers', { vpnip: Number(ip) }))[0]
+             await server.call('setOnlineVPN', user._id, {
+                 vpnMbGastados: user.vpnMbGastados ?
+                     (consumos[cliente]
+                         ? (user.vpnMbGastados + (megasGastados - consumos[cliente]))
+                         : user.vpnMbGastados + megasGastados)
+                     : consumos[cliente]
+             })
+
+             ////// CONECTANDO EL USUARIO EN VIDKAR
+             await server.call('setOnlineVPN', user._id, { "vpn2mbConnected": true })
+ 
+             console.log(`CLIENTE: ${cliente} gasto: ${megasGastados/ 1000000}`);
+             consumos[cliente] = megasGastados
+
+
+             } catch (error) {
+                 console.log(error);
+             }
             
-            await usuariosVPN.forEach((usuarioVPN, index) => {
-                result = usuarioVPN.username ? `${result}${usuarioVPN.username} l2tpd ${usuarioVPN.passvpn ? usuarioVPN.passvpn : "123"} ${usuarioVPN.vpnip ? '192.168.18.' + usuarioVPN.vpnip : "*"}\n` : result
-            });
-            await console.log(result);
 
-            ////////GUARDANDO PARA EL ARCHIVO OPTIONS LOS USUARIOS CON EL SERVICIO
-            await fs.writeFile("/etc/ppp/chap-secrets", result, (err) => {
-                if (err) console.error("Error: " + err);
-                console.info("Datos Guardados Correctamente!!!")
-            });
+         })
+ 
+         ////////DEVUELVE LA IP DE LOS DESCONECTADOS
+         let array1 = Object.keys(consumos).filter(function (val) {
+             return listadeclientesconectados.indexOf(val.toString()) == -1;
+         });
+ 
+         console.log(consumos);
+ 
+         console.log("DESCONECTADOS: " + array1);
+         ////// QUITA LOS USUARIOS DESCONECTADOS Y ACTUALIZA LOS MEGAS EN VIDKAR
+         array1.length > 0 && (
+             array1.map(async (a) => {
+                 try {
+                     let ip = await a.split(".")[3]
+                     let user = (await server.call('getusers', { vpnip: Number(ip) }))[0]
+ 
+                     /////eliminando usuario del arreglo de los conectados
+                     delete consumos[a]
+ 
+                     /////desconectando usuario en VIDKAR
+                     await server.call('setOnlineVPN', user._id, { "vpn2mbConnected": false })
+ 
+ 
+                 } catch (error) {
+                     console.log(error);
+                 }
+               
 
+             })
+         )
+ 
+         //limpia cache de conectados
+         listadeclientesconectados = []
+ 
 
-
-
-
-            /////LISTA LAS INTERFACES
-            let listInterfaces = Object.keys(element)
-    
-            /////SELECCIONA LAS INTERFACES CON PPP
-            let ppp = listInterfaces.filter(interface => interface.includes("ppp"))
-            //////RECORRE TODAS LAS INTERFACES
-
-
-            
-              
-                
-            ppp.map(async (elementppp) => {
-                ///////SELECCIONA LA IP DEL CLIENTE
-                let cliente =  element[elementppp].inet.destination
-    
-                //////MEGAS GASTADOS
-                let megasGastados =  element[elementppp].tx.bytes 
-    
-                /////LISTA LOS CONECTADOS PARA COMPARARLOS CON EL REGISTRO DE MEGAS PARA SABER CUAL SE DESCONECTO
-                listadeclientesconectados.push(cliente)
-
-                console.log( cliente)
-                ///////SUMANDOLE EL CONSUMO AL USUARIO
-                let ip = cliente.split(".")[3]
-                let user = (await server.call('getusers', { vpnip: Number(ip) }))[0]
-                await server.call('setOnlineVPN', user._id, {
-                    vpnMbGastados: user.vpnMbGastados ?
-                        (consumos[cliente]
-                            ? (user.vpnMbGastados + (megasGastados - consumos[cliente]))
-                            : user.vpnMbGastados + megasGastados)
-                        : consumos[cliente]
-                })
-
-                ////// CONECTANDO EL USUARIO EN VIDKAR
-                await server.call('setOnlineVPN', user._id, { "vpn2mbConnected": true })
-    
-                console.log(`CLIENTE: ${cliente} gasto: ${megasGastados/ 1000000}`);
-                consumos[cliente] = megasGastados
-
-
-
-            })
-    
-            ////////DEVUELVE LA IP DE LOS DESCONECTADOS
-            let array1 = Object.keys(consumos).filter(function (val) {
-                return listadeclientesconectados.indexOf(val.toString()) == -1;
-            });
-    
-            console.log(consumos);
-    
-            console.log("DESCONECTADOS: " + array1);
-            ////// QUITA LOS USUARIOS DESCONECTADOS Y ACTUALIZA LOS MEGAS EN VIDKAR
-            array1.length > 0 && (
-                array1.map(async (a) => {
-                    let ip = await a.split(".")[3]
-                    let user = (await server.call('getusers', { vpnip: Number(ip) }))[0]
-
-                    /////eliminando usuario del arreglo de los conectados
-                    delete consumos[a]
-
-                    /////desconectando usuario en VIDKAR
-                    await server.call('setOnlineVPN', user._id, { "vpn2mbConnected": false })
-
-
-
-                })
-            )
-    
-            //limpia cache de conectados
-            listadeclientesconectados = []
-    
-
+    } catch (error) {
+        console.log(error);
+    }
+           
         });
     
             // server.call('setOnlineVPN', user._id, { "vpn2mbConnected": disponible })
